@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сравнительный анализ алгоритмов внешних сортировок</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <header class="hero">
+        <div class="container">
+            <span class="badge">Курсовой проект • ВятГУ 2026</span>
+            <h1>Сравнительный анализ алгоритмов внешних сортировок</h1>
+            <p class="subtitle">
+                Исследование эффективности алгоритмов сортировки больших объемов данных при жестких ограничениях оперативной памяти и прямом блочном I/O через O_DIRECT.
+            </p>
+            <div class="meta-info">
+                <span><strong>Автор:</strong> Я. А. Varin</span>
+                <span><strong>Руководитель:</strong> к.т.н., доц. Т. А. Пескишева</span>
+                <span><strong>Факультет:</strong> ФКФМН, ВятГУ</span>
+            </div>
+            <div class="hero-links">
+                <a href="https://github.com/Qdivey/Eternal_sort_comparing" target="_blank" class="btn primary">Репозиторий проекта на GitHub</a>
+                <a href="#results" class="btn secondary">Смотреть результаты</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        
+        <section id="abstract" class="card">
+            <h2>О проекте</h2>
+            <p>
+                В условиях постоянного увеличения объема обрабатываемых данных в системах бизнес-аналитики и хранилищах логов сверхвысокой плотности возникает необходимость эффективной сортировки файлов, размер которых существенно превышает доступный объем ОЗУ.
+            </p>
+            <p>
+                <strong>Цель работы:</strong> сравнительный анализ алгоритмов внешней сортировки с точки зрения их эффективности, включая чистую скорость выполнения, пропускную способность дисковой подсистемы и требования к системным ресурсам при блочном вводе-выводе в обход кэша страниц OS.
+            </p>
+        </section>
+
+        <section id="algorithms" class="card">
+            <h2>Исследуемые алгоритмы</h2>
+            <p>В рамках проекта были программно реализованы на C++20 и протестированы 5 алгоритмов двух ключевых классов:</p>
+            
+            <div class="grid-2">
+                <div>
+                    <h3>Алгоритмы на основе слияния (Merge-based)</h3>
+                    <ul>
+                        <li><strong>Two-way External Merge Sort:</strong> классическое попарное слияние с чередованием файлов.</li>
+                        <li><strong>Polyphase Merge Sort (3 и 4 файла):</strong> полифазное слияние с распределением серий по числам Фибоначчи.</li>
+                        <li><strong>K-way Merge Sort (K=16):</strong> многопутевое слияние с использованием структуры min-heap для выбора минимума.</li>
+                        <li><strong>Выбор с замещением (Replacement Selection):</strong> вспомогательный алгоритм генерации начальных серий средней длиной ~2M.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Алгоритмы на основе распределения (Distribution-based)</h3>
+                    <ul>
+                        <li><strong>External Radix Sort:</strong> поразрядная сортировка 32-битных ключей за 4 прохода по 8 бит с использованием 256 корзин-буферов без операций сравнения.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="environment" class="card">
+            <h2>Аппаратно-программный стенд</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Параметр</th>
+                            <th>Значение / Характеристика</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Процессор (CPU)</td>
+                            <td>AMD Ryzen 5 3500U</td>
+                        </tr>
+                        <tr>
+                            <td>Оперативная память (RAM)</td>
+                            <td>12 GiB (Буфер алгоритмов строго $M = 4$ MiB)</td>
+                        </tr>
+                        <tr>
+                            <td>Накопитель (Storage)</td>
+                            <td>NVMe SSD (файловая система ext4)</td>
+                        </tr>
+                        <tr>
+                            <td>Операционная система</td>
+                            <td>Arch Linux x86_64</td>
+                        </tr>
+                        <tr>
+                            <td>Язык и Компилятор</td>
+                            <td>C++20 (GCC / Clang, флаг <code>O_DIRECT</code>)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="results" class="card">
+            <h2>Результаты бенчмаркинга (64 млн элементов / 256 MiB)</h2>
+            <p>
+                Ниже приведено сравнение показателей алгоритмов при обработке максимального объема данных (256 MiB) в усредненных условиях (случайные данные) и в худшем сценарии (обратный порядок):
+            </p>
+
+            <!-- НАЧАЛО: Блок с диаграммой -->
+            <div class="chart-wrapper">
+                <img src="diagram.png" alt="Диаграмма сравнения скорости алгоритмов" class="benchmark-chart">
+            </div>
+            <!-- КОНЕЦ: Блок с диаграммой -->
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Алгоритм</th>
+                            <th>Время (Случайные), мс</th>
+                            <th>Пропускная способность, MiB/s</th>
+                            <th>Проходы по диску (Случайные)</th>
+                            <th>Проходы по диску (Reversed)</th>
+                        </tr>
+                    </thead>
+                    <!-- ... остальная часть вашей таблицы ... -->
+                    <tbody>
+                        <tr class="highlight">
+                            <td><strong>External Radix Sort</strong></td>
+                            <td><strong>3 247</strong></td>
+                            <td><strong>78.8</strong></td>
+                            <td>4</td>
+                            <td>4</td>
+                        </tr>
+                        <tr>
+                            <td>K-way Merge (K=16)</td>
+                            <td>28 789</td>
+                            <td>8.9</td>
+                            <td>2</td>
+                            <td>2</td>
+                        </tr>
+                        <tr>
+                            <td>Two-way Merge</td>
+                            <td>31 243</td>
+                            <td>8.2</td>
+                            <td>5</td>
+                            <td>6</td>
+                        </tr>
+                        <tr>
+                            <td>Polyphase Merge (3 files)</td>
+                            <td>32 708</td>
+                            <td>7.8</td>
+                            <td>7</td>
+                            <td>9</td>
+                        </tr>
+                        <tr class="danger">
+                            <td>Polyphase Merge (4 files)</td>
+                            <td>35 161</td>
+                            <td>7.3</td>
+                            <td>13</td>
+                            <td>17</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>        <section id="recommendations" class="card">
+            <h2>Практические рекомендации</h2>
+            <ol>
+                <li>
+                    <strong>Абсолютный лидер по скорости:</strong> Для 32-битных целочисленных ключей оптимален <code>External Radix Sort</code>. Он работает в 3–4 раза быстрее аналогов, стабильно обеспечивая линейную сложность $O(N)$ и не завися от порядка входных данных.
+                </li>
+                <li>
+                    <strong>Минимизация износа SSD:</strong> При ограничениях на ресурс записи предпочтителен <code>K-way Merge (K=16)</code>. Благодаря структуре min-heap он требует всего 1–2 прохода по диску, сокращая объем перезаписей в 2.5 раза по сравнению с Two-way Merge.
+                </li>
+                <li>
+                    <strong>Упорядоченные и частично отсортированные массивы:</strong> Алгоритмы слияния в сочетании с <code>выбором с замещением</code> автоматически формируют сверхдлинные серии, что сводит дисковую фазу слияния практически к нулю (0–1 проход).
+                </li>
+            </ol>
+        </section>
+
+        <section id="links" class="card">
+            <h2>Ссылки и ресурсы</h2>
+            <ul>
+                <li><a href="https://github.com/Qdivey/Eternal_sort_comparing" target="_blank">Исходный код бенчмарков и алгоритмов на C++ (GitHub)</a></li>
+                <li><a href="https://github.com/Qdivey" target="_blank">Профиль автора на GitHub</a></li>
+            </ul>
+        </section>
+
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>© 2026, курсовой проект ВятГУ. Страница сделана на коленке и опубликована через GitHub Pages.</p>
+        </div>
+    </footer>
+
+</body>
+</html>
